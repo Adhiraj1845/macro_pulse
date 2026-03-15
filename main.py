@@ -3,6 +3,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from app.database import Base, engine
+from app.models import MacroIndicator, IndicatorSnapshot, MarketAsset, AssetSnapshot  # noqa: F401 — ensures models are registered
 
 app = FastAPI(
     title=settings.app_title,
@@ -11,6 +13,9 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
 )
+
+# Create all database tables on startup
+Base.metadata.create_all(bind=engine)
 
 app.add_middleware(
     CORSMiddleware,
