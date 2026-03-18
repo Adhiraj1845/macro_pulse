@@ -302,7 +302,14 @@ def compute_recession_risk(db: Session) -> dict:
             continue
 
         current_value = float(series.iloc[-1])
-        latest_date = series.index[-1].date()
+        # Use actual snapshot date, not the resampled month-end date
+        latest_snap = (
+            db.query(IndicatorSnapshot)
+            .filter(IndicatorSnapshot.indicator_id == indicator.id)
+            .order_by(IndicatorSnapshot.date.desc())
+            .first()
+        )
+        latest_date = latest_snap.date if latest_snap else series.index[-1].date()
 
         if as_of_date is None or latest_date > as_of_date:
             as_of_date = latest_date
