@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Macro Pulse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:       #0a0a0b;
+  --surface:  #111113;
+  --surface2: #18181b;
+  --border:   #27272a;
+  --border2:  #3f3f46;
+  --text:     #fafafa;
+  --text2:    #a1a1aa;
+  --text3:    #52525b;
+  --accent:   #e4e4e7;
+  --gold:     #d4a853;
+  --gold-dim: rgba(212,168,83,0.08);
+  --green:    #4ade80;
+  --green-dim:rgba(74,222,128,0.08);
+  --red:      #f87171;
+  --red-dim:  rgba(248,113,113,0.08);
+  --amber:    #fb923c;
+  --sans: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+  --radius: 8px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── SIDEBAR ── */
+aside {
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  width: 220px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  padding: 0;
+}
+
+.sidebar-logo {
+  padding: 28px 24px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo-name {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  color: var(--text);
+}
+
+.logo-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  margin-top: 2px;
+  letter-spacing: 0.5px;
+}
+
+nav {
+  padding: 16px 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-section {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 12px 12px 6px;
+}
+
+nav button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--text2);
+  font-family: var(--sans);
+  font-size: 13.5px;
+  font-weight: 400;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+}
+
+nav button:hover { background: var(--surface2); color: var(--text); }
+
+nav button.active {
+  background: var(--surface2);
+  color: var(--text);
+  font-weight: 500;
+}
+
+nav button.active .nav-icon { color: var(--gold); }
+
+.nav-icon { font-size: 15px; opacity: 0.8; }
+
+.sidebar-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+}
+
+.status-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: blink 3s infinite;
+}
+
+@keyframes blink {
+  0%,100% { opacity:1; }
+  50% { opacity:0.3; }
+}
+
+/* ── MAIN ── */
+main {
+  margin-left: 220px;
+  min-height: 100vh;
+  padding: 40px 48px;
+}
+
+.page { display: none; }
+.page.active { display: block; animation: rise 0.25s ease; }
+
+@keyframes rise {
+  from { opacity:0; transform:translateY(6px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* ── PAGE HEADER ── */
+.page-header {
+  margin-bottom: 32px;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  color: var(--text);
+}
+
+.page-desc {
+  font-size: 13px;
+  color: var(--text2);
+  margin-top: 4px;
+  font-weight: 300;
+}
+
+/* ── GRID LAYOUTS ── */
+.grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+.grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 20px; }
+.grid-1-2 { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+
+/* ── CARD ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  transition: border-color 0.2s;
+}
+
+.card:hover { border-color: var(--border2); }
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.card-title {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text3);
+  font-family: var(--mono);
+}
+
+.card-value {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -1px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.card-meta {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 6px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.badge.up   { color: var(--green); background: var(--green-dim); }
+.badge.down { color: var(--red);   background: var(--red-dim); }
+.badge.flat { color: var(--text3); background: var(--surface2); }
+.badge.amber { color: var(--amber); background: rgba(251,146,60,0.1); }
+
+/* ── SECTION LABEL ── */
+.section-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 12px;
+  margin-top: 28px;
+}
+
+/* ── TABLE ── */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.data-table th {
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 400;
+}
+
+.data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text2);
+  vertical-align: middle;
+}
+
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--surface2); color: var(--text); }
+
+.data-table .mono { font-family: var(--mono); color: var(--text); }
+.data-table .dim  { color: var(--text3); font-size: 12px; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+}
+
+.btn-primary {
+  background: var(--text);
+  color: var(--bg);
+}
+.btn-primary:hover { background: var(--accent); }
+
+.btn-ghost {
+  background: none;
+  border: 1px solid var(--border2);
+  color: var(--text2);
+}
+.btn-ghost:hover { border-color: var(--text3); color: var(--text); background: var(--surface2); }
+
+.btn-danger {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--red);
+}
+.btn-danger:hover { background: var(--red-dim); }
+
+/* ── INPUTS ── */
+.form-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 24px; }
+
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+
+.form-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+
+.form-control {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+  padding: 8px 12px;
+  min-width: 140px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.form-control:focus { border-color: var(--border2); }
+.form-control option { background: var(--surface2); }
+
+/* ── RECESSION GAUGE ── */
+.gauge-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 0 8px;
+}
+
+.gauge-svg { overflow: visible; }
+
+.gauge-score {
+  text-align: center;
+  margin-top: 8px;
+}
+
+.gauge-number {
+  font-size: 48px;
+  font-weight: 600;
+  letter-spacing: -2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.gauge-level {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+/* ── SIGNALS ── */
+.signal-list { display: flex; flex-direction: column; gap: 12px; }
+
+.signal-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  background: var(--surface2);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.signal-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.signal-desc {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 2px;
+}
+
+.signal-bar-wrap {
+  margin-top: 8px;
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.signal-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 1s ease;
+}
+
+.signal-value {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.signal-contrib {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  text-align: right;
+  margin-top: 2px;
+}
+
+/* ── MODAL ── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  backdrop-filter: blur(4px);
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  padding: 28px;
+  width: 480px;
+  max-width: 90vw;
+  animation: rise 0.2s ease;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.modal-fields { display: flex; flex-direction: column; gap: 14px; }
+
+.modal-field label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 5px;
+}
+
+.modal-field input,
+.modal-field select,
+.modal-field textarea {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+  padding: 9px 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.modal-field input:focus,
+.modal-field select:focus { border-color: var(--border2); }
+
+.modal-field textarea { resize: vertical; min-height: 72px; }
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 999;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all 0.25s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.success { background: var(--surface2); border: 1px solid var(--green); color: var(--green); }
+.toast.error   { background: var(--surface2); border: 1px solid var(--red);   color: var(--red); }
+
+/* ── LOADING ── */
+.loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text3);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 32px 0;
+  justify-content: center;
+}
+
+.spinner {
+  width: 16px; height: 16px;
+  border: 2px solid var(--border2);
+  border-top-color: var(--text2);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty {
+  text-align: center;
+  padding: 48px;
+  color: var(--text3);
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+/* ── CHART CONTAINER ── */
+.chart-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  position: relative;
+}
+
+.chart-box canvas { max-height: 280px; }
+
+/* ── CORRELATION RESULT ── */
+.corr-result {
+  display: none;
+  margin-top: 24px;
+}
+
+.corr-number {
+  font-size: 64px;
+  font-weight: 600;
+  letter-spacing: -3px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.corr-label {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text2);
+  margin-top: 6px;
+}
+
+/* ── DIVIDER ── */
+hr { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside>
+  <div class="sidebar-logo">
+    <div class="logo-name">Macro Pulse</div>
+    <div class="logo-tag">Analytics Terminal v1.0</div>
+  </div>
+  <nav>
+    <div class="nav-section">Monitor</div>
+    <button class="active" onclick="showPage('dashboard')">
+      <span class="nav-icon">◈</span> Dashboard
+    </button>
+    <button onclick="showPage('recession')">
+      <span class="nav-icon">◉</span> Recession Risk
+    </button>
+    <div class="nav-section">Analyse</div>
+    <button onclick="showPage('correlation')">
+      <span class="nav-icon">◎</span> Correlation
+    </button>
+    <button onclick="showPage('sector')">
+      <span class="nav-icon">▦</span> Sector Impact
+    </button>
+    <div class="nav-section">Manage</div>
+    <button onclick="showPage('indicators')">
+      <span class="nav-icon">▲</span> Indicators
+    </button>
+    <button onclick="showPage('assets')">
+      <span class="nav-icon">◇</span> Assets
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="status-row">
+      <div class="status-dot"></div>
+      API Connected
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main>
+
+  <!-- ══ DASHBOARD ══ -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-desc">Live market summary across all tracked indicators and assets</div>
+      </div>
+      <button class="btn btn-ghost" onclick="loadDashboard()">↺ Refresh</button>
+    </div>
+
+    <div class="section-label">Macro Indicators</div>
+    <div class="grid-4" id="indicator-cards">
+      <div class="loading"><div class="spinner"></div> Loading...</div>
+    </div>
+
+    <div class="section-label">Market Assets</div>
+    <div class="grid-4" id="asset-cards">
+      <div class="loading"><div class="spinner"></div> Loading...</div>
+    </div>
+  </div>
+
+  <!-- ══ RECESSION RISK ══ -->
+  <div class="page" id="page-recession">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Recession Risk Monitor</div>
+        <div class="page-desc">Composite score from four macroeconomic signals</div>
+      </div>
+      <button class="btn btn-ghost" onclick="loadRecession()">↺ Refresh</button>
+    </div>
+
+    <div class="grid-1-2" id="recession-content">
+      <div class="loading" style="grid-column:1/-1"><div class="spinner"></div> Loading...</div>
+    </div>
+  </div>
+
+  <!-- ══ CORRELATION ══ -->
+  <div class="page" id="page-correlation">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Correlation Explorer</div>
+        <div class="page-desc">Pearson correlation between any indicator and market asset</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <div class="form-label">Indicator</div>
+        <select class="form-control" id="corr-indicator"></select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Asset</div>
+        <select class="form-control" id="corr-asset"></select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Start Date</div>
+        <input type="date" class="form-control" id="corr-start">
+      </div>
+      <div class="form-group">
+        <div class="form-label">End Date</div>
+        <input type="date" class="form-control" id="corr-end">
+      </div>
+      <button class="btn btn-primary" onclick="runCorrelation()">Run Analysis</button>
+    </div>
+
+    <div class="corr-result" id="corr-result">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Pearson Coefficient</div></div>
+          <div class="corr-number" id="corr-number">—</div>
+          <div class="corr-label" id="corr-label"></div>
+          <div class="card-meta" id="corr-meta" style="margin-top:12px"></div>
+        </div>
+        <div class="chart-box">
+          <div class="card-title" style="margin-bottom:14px">Time Series</div>
+          <canvas id="corr-chart"></canvas>
+        </div>
+      </div>
+      <div class="chart-box" style="margin-top:20px">
+        <div class="card-title" style="margin-bottom:14px">Scatter Plot</div>
+        <canvas id="scatter-chart" style="max-height:240px"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SECTOR IMPACT ══ -->
+  <div class="page" id="page-sector">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Sector Impact</div>
+        <div class="page-desc">How macro indicators correlate with each market sector</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <div class="form-label">Indicator</div>
+        <select class="form-control" id="sector-indicator"></select>
+      </div>
+      <button class="btn btn-primary" onclick="runSectorImpact()">Analyse</button>
+    </div>
+
+    <div id="sector-result"></div>
+  </div>
+
+  <!-- ══ INDICATORS MANAGER ══ -->
+  <div class="page" id="page-indicators">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Indicators</div>
+        <div class="page-desc">Manage macroeconomic indicator series</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="loadIndicatorsTable()">↺ Refresh</button>
+        <button class="btn btn-primary" onclick="openModal('indicator')">+ Add Indicator</button>
+      </div>
+    </div>
+
+    <div class="card" style="padding:0; overflow:hidden">
+      <div id="indicators-table-wrap">
+        <div class="loading"><div class="spinner"></div> Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ASSETS MANAGER ══ -->
+  <div class="page" id="page-assets">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Assets</div>
+        <div class="page-desc">Manage tracked market assets</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="loadAssetsTable()">↺ Refresh</button>
+        <button class="btn btn-primary" onclick="openModal('asset')">+ Add Asset</button>
+      </div>
+    </div>
+
+    <div class="card" style="padding:0; overflow:hidden">
+      <div id="assets-table-wrap">
+        <div class="loading"><div class="spinner"></div> Loading...</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+
+  <!-- Indicator Modal -->
+  <div class="modal" id="modal-indicator">
+    <div class="modal-title" id="modal-indicator-title">Add Indicator</div>
+    <div class="modal-fields">
+      <input type="hidden" id="ind-edit-id">
+      <div class="modal-field">
+        <label>FRED Series ID</label>
+        <input type="text" id="ind-fred-id" placeholder="e.g. CPIAUCSL">
+      </div>
+      <div class="modal-field">
+        <label>Name</label>
+        <input type="text" id="ind-name" placeholder="e.g. Consumer Price Index">
+      </div>
+      <div class="modal-field">
+        <label>Category</label>
+        <select id="ind-category">
+          <option value="inflation">Inflation</option>
+          <option value="interest_rate">Interest Rate</option>
+          <option value="gdp">GDP</option>
+          <option value="unemployment">Unemployment</option>
+          <option value="yield_curve">Yield Curve</option>
+          <option value="credit">Credit</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label>Unit</label>
+        <input type="text" id="ind-unit" placeholder="e.g. Percent">
+      </div>
+      <div class="modal-field">
+        <label>Frequency</label>
+        <input type="text" id="ind-frequency" placeholder="e.g. Monthly">
+      </div>
+      <div class="modal-field">
+        <label>Description</label>
+        <textarea id="ind-description" placeholder="Optional description"></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModalDirect()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveIndicator()">Save</button>
+    </div>
+  </div>
+
+  <!-- Asset Modal -->
+  <div class="modal" id="modal-asset" style="display:none">
+    <div class="modal-title" id="modal-asset-title">Add Asset</div>
+    <div class="modal-fields">
+      <input type="hidden" id="asset-edit-id">
+      <div class="modal-field">
+        <label>Ticker</label>
+        <input type="text" id="asset-ticker" placeholder="e.g. SPY">
+      </div>
+      <div class="modal-field">
+        <label>Name</label>
+        <input type="text" id="asset-name" placeholder="e.g. SPDR S&P 500 ETF">
+      </div>
+      <div class="modal-field">
+        <label>Asset Class</label>
+        <select id="asset-class">
+          <option value="etf">ETF</option>
+          <option value="equity">Equity</option>
+          <option value="bond">Bond</option>
+          <option value="commodity">Commodity</option>
+          <option value="index">Index</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label>Sector</label>
+        <input type="text" id="asset-sector" placeholder="e.g. Technology">
+      </div>
+      <div class="modal-field">
+        <label>Country</label>
+        <input type="text" id="asset-country" value="US">
+      </div>
+      <div class="modal-field">
+        <label>Description</label>
+        <textarea id="asset-description" placeholder="Optional description"></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModalDirect()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAsset()">Save</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '';
+let corrChart = null, scatterChart = null;
+let allIndicators = [], allAssets = [];
+
+// ── NAVIGATION ──
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+
+  const loaders = {
+    dashboard:   loadDashboard,
+    recession:   loadRecession,
+    correlation: loadCorrelationSelects,
+    sector:      loadSectorSelects,
+    indicators:  loadIndicatorsTable,
+    assets:      loadAssetsTable,
+  };
+  if (loaders[name]) loaders[name]();
+}
+
+// ── API HELPERS ──
+async function api(path, opts = {}) {
+  const r = await fetch(API + path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({ detail: r.statusText }));
+    throw new Error(err.detail || r.statusText);
+  }
+  if (r.status === 204) return null;
+  return r.json();
+}
+
+// ── TOAST ──
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── FORMAT HELPERS ──
+function fmt(val, decimals = 2) {
+  if (val == null) return '—';
+  return Number(val).toLocaleString('en-US', { maximumFractionDigits: decimals, minimumFractionDigits: decimals });
+}
+
+function fmtPct(val) {
+  if (val == null) return '—';
+  const s = (val >= 0 ? '+' : '') + fmt(val * 100, 2) + '%';
+  return s;
+}
+
+function trendBadge(trend, change) {
+  if (trend === 'no_data') return '<span class="badge flat">No Data</span>';
+  if (trend === 'up')   return `<span class="badge up">▲ ${change != null ? fmtPct(change/100) : ''}</span>`;
+  if (trend === 'down') return `<span class="badge down">▼ ${change != null ? fmtPct(change/100) : ''}</span>`;
+  return '<span class="badge flat">— Flat</span>';
+}
+
+// ── DASHBOARD ──
+async function loadDashboard() {
+  document.getElementById('indicator-cards').innerHTML = '<div class="loading"><div class="spinner"></div> Loading...</div>';
+  document.getElementById('asset-cards').innerHTML = '<div class="loading"><div class="spinner"></div> Loading...</div>';
+
+  try {
+    const data = await api('/api/v1/analytics/market-summary');
+
+    // Indicator cards
+    const indEl = document.getElementById('indicator-cards');
+    if (!data.indicators.length) {
+      indEl.innerHTML = '<div class="empty">No indicators found. Add some in the Indicators section.</div>';
+    } else {
+      indEl.innerHTML = data.indicators.map(ind => `
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">${ind.fred_series_id}</div>
+            ${trendBadge(ind.trend, ind.change_pct)}
+          </div>
+          <div class="card-value">${ind.latest_value != null ? fmt(ind.latest_value) : '—'}</div>
+          <div class="card-meta">${ind.name}</div>
+          <div class="card-meta" style="margin-top:4px">${ind.latest_date || 'No data'}</div>
+        </div>
+      `).join('');
+    }
+
+    // Asset cards
+    const assetEl = document.getElementById('asset-cards');
+    if (!data.assets.length) {
+      assetEl.innerHTML = '<div class="empty">No assets found. Add some in the Assets section.</div>';
+    } else {
+      assetEl.innerHTML = data.assets.map(a => `
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">${a.ticker}</div>
+            ${trendBadge(a.trend, null)}
+          </div>
+          <div class="card-value">${a.latest_close != null ? '$' + fmt(a.latest_close) : '—'}</div>
+          <div class="card-meta">${a.name}</div>
+          <div class="card-meta" style="margin-top:4px">
+            ${a.daily_return != null ? (a.daily_return >= 0 ? '+' : '') + fmt(a.daily_return * 100, 3) + '% today' : 'No data'}
+          </div>
+        </div>
+      `).join('');
+    }
+  } catch(e) {
+    toast('Failed to load dashboard: ' + e.message, 'error');
+  }
+}
+
+// ── RECESSION RISK ──
+async function loadRecession() {
+  const el = document.getElementById('recession-content');
+  el.innerHTML = '<div class="loading" style="grid-column:1/-1"><div class="spinner"></div> Loading...</div>';
+
+  try {
+    const d = await api('/api/v1/analytics/recession-risk');
+
+    const colorMap = { Low: 'var(--green)', Elevated: 'var(--amber)', High: 'var(--red)', Critical: 'var(--red)' };
+    const gaugeColor = colorMap[d.level] || 'var(--text2)';
+    const angle = -135 + (d.score / 100) * 270;
+    const rad = (a) => a * Math.PI / 180;
+    const cx = 100, cy = 100, r = 70;
+
+    // Arc path helper
+    function arcPath(startDeg, endDeg, color, width = 6) {
+      const s = rad(startDeg), e = rad(endDeg);
+      const x1 = cx + r * Math.cos(s), y1 = cy + r * Math.sin(s);
+      const x2 = cx + r * Math.cos(e), y2 = cy + r * Math.sin(e);
+      const large = (endDeg - startDeg) > 180 ? 1 : 0;
+      return `<path d="M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}" fill="none" stroke="${color}" stroke-width="${width}" stroke-linecap="round"/>`;
+    }
+
+    // Needle
+    const needleAngle = rad(-135 + (d.score / 100) * 270);
+    const nx = cx + (r - 10) * Math.cos(needleAngle);
+    const ny = cy + (r - 10) * Math.sin(needleAngle);
+
+    el.innerHTML = `
+      <div class="card" style="display:flex;flex-direction:column;align-items:center">
+        <div class="gauge-wrap">
+          <svg class="gauge-svg" viewBox="0 0 200 140" width="240">
+            ${arcPath(rad(-135), rad(135), 'var(--border)', 6)}
+            ${arcPath(-135, -135 + (d.score/100)*270, gaugeColor, 6)}
+            <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}"
+                  stroke="${gaugeColor}" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="${cx}" cy="${cy}" r="4" fill="${gaugeColor}"/>
+            <text x="${cx}" y="128" text-anchor="middle"
+                  font-family="DM Mono" font-size="9" fill="var(--text3)" letter-spacing="1">
+              LOW — — — — — CRITICAL
+            </text>
+          </svg>
+          <div class="gauge-score">
+            <div class="gauge-number" style="color:${gaugeColor}">${d.score}</div>
+            <div class="gauge-level" style="color:${gaugeColor}">${d.level} Risk</div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text2);text-align:center;margin-top:12px;max-width:260px;line-height:1.5">${d.summary}</div>
+        ${d.as_of_date ? `<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:8px">As of ${d.as_of_date}</div>` : ''}
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:0">
+        <div class="section-label" style="margin-top:0">Signal Breakdown</div>
+        <div class="signal-list">
+          ${d.signals.map(s => {
+            const pct = Math.round(s.signal_score * 100);
+            const barColor = pct > 66 ? 'var(--red)' : pct > 33 ? 'var(--amber)' : 'var(--green)';
+            return `
+              <div class="signal-item">
+                <div>
+                  <div class="signal-name">${s.name}</div>
+                  <div class="signal-desc">${s.current_value != null ? s.fred_series_id + ': ' + fmt(s.current_value, 3) : 'No data ingested'}</div>
+                  <div class="signal-bar-wrap">
+                    <div class="signal-bar" style="width:${pct}%;background:${barColor}"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="signal-value" style="color:${barColor}">${pct}%</div>
+                  <div class="signal-contrib">+${fmt(s.contribution, 1)} pts</div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  } catch(e) {
+    toast('Failed to load recession risk: ' + e.message, 'error');
+  }
+}
+
+// ── CORRELATION ──
+async function loadCorrelationSelects() {
+  try {
+    const [inds, assets] = await Promise.all([
+      api('/api/v1/indicators'),
+      api('/api/v1/assets'),
+    ]);
+    allIndicators = inds; allAssets = assets;
+
+    const indSel = document.getElementById('corr-indicator');
+    const assetSel = document.getElementById('corr-asset');
+    indSel.innerHTML = inds.map(i => `<option value="${i.id}">${i.fred_series_id} — ${i.name}</option>`).join('');
+    assetSel.innerHTML = assets.map(a => `<option value="${a.id}">${a.ticker} — ${a.name}</option>`).join('');
+  } catch(e) {
+    toast('Failed to load selects: ' + e.message, 'error');
+  }
+}
+
+async function runCorrelation() {
+  const indId = document.getElementById('corr-indicator').value;
+  const assetId = document.getElementById('corr-asset').value;
+  const start = document.getElementById('corr-start').value;
+  const end = document.getElementById('corr-end').value;
+
+  let url = `/api/v1/analytics/correlation?indicator_id=${indId}&asset_id=${assetId}`;
+  if (start) url += `&start_date=${start}`;
+  if (end)   url += `&end_date=${end}`;
+
+  try {
+    const d = await api(url);
+    const r = d.correlation;
+    const absR = Math.abs(r);
+    const color = absR > 0.6 ? (r > 0 ? 'var(--green)' : 'var(--red)') : 'var(--text)';
+
+    document.getElementById('corr-number').style.color = color;
+    document.getElementById('corr-number').textContent = r.toFixed(4);
+    document.getElementById('corr-label').textContent = d.interpretation;
+    document.getElementById('corr-meta').textContent =
+      `${d.data_points} monthly observations · ${d.start_date} to ${d.end_date}`;
+
+    // Time series chart
+    if (corrChart) corrChart.destroy();
+    const labels = d.series.map(p => p.date);
+    const indVals = d.series.map(p => p.indicator_value);
+    const assetVals = d.series.map(p => p.asset_value);
+
+    corrChart = new Chart(document.getElementById('corr-chart'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: d.indicator_name,
+            data: indVals,
+            borderColor: 'var(--gold)',
+            backgroundColor: 'transparent',
+            borderWidth: 1.5,
+            pointRadius: 0,
+            tension: 0.3,
+            yAxisID: 'y1',
+          },
+          {
+            label: d.asset_ticker,
+            data: assetVals,
+            borderColor: 'var(--text2)',
+            backgroundColor: 'transparent',
+            borderWidth: 1.5,
+            pointRadius: 0,
+            tension: 0.3,
+            yAxisID: 'y2',
+          }
+        ]
+      },
+      options: chartOptions({ dualAxis: true })
+    });
+
+    // Scatter chart
+    if (scatterChart) scatterChart.destroy();
+    scatterChart = new Chart(document.getElementById('scatter-chart'), {
+      type: 'scatter',
+      data: {
+        datasets: [{
+          label: 'Observations',
+          data: d.series.map(p => ({ x: p.indicator_value, y: p.asset_value })),
+          backgroundColor: 'rgba(212,168,83,0.4)',
+          borderColor: 'var(--gold)',
+          borderWidth: 1,
+          pointRadius: 3,
+        }]
+      },
+      options: {
+        ...chartOptions(),
+        scales: {
+          x: { ...axisStyle(), title: { display: true, text: d.indicator_name, color: 'var(--text3)', font: { size: 11 } } },
+          y: { ...axisStyle(), title: { display: true, text: d.asset_ticker, color: 'var(--text3)', font: { size: 11 } } },
+        }
+      }
+    });
+
+    document.getElementById('corr-result').style.display = 'block';
+  } catch(e) {
+    toast(e.message, 'error');
+  }
+}
+
+// ── SECTOR IMPACT ──
+async function loadSectorSelects() {
+  try {
+    const inds = await api('/api/v1/indicators');
+    allIndicators = inds;
+    const sel = document.getElementById('sector-indicator');
+    sel.innerHTML = inds.map(i => `<option value="${i.id}">${i.fred_series_id} — ${i.name}</option>`).join('');
+  } catch(e) { toast('Failed to load indicators', 'error'); }
+}
+
+async function runSectorImpact() {
+  const indId = document.getElementById('sector-indicator').value;
+  const el = document.getElementById('sector-result');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div> Analysing...</div>';
+
+  try {
+    const d = await api(`/api/v1/analytics/sector-impact/${indId}`);
+
+    if (!d.results.length) {
+      el.innerHTML = '<div class="empty">No asset data available. Ingest asset data first.</div>';
+      return;
+    }
+
+    const max = Math.max(...d.results.map(r => Math.abs(r.correlation)));
+
+    el.innerHTML = `
+      <div class="card" style="padding:0;overflow:hidden">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Ticker</th>
+              <th>Asset</th>
+              <th>Sector</th>
+              <th>Correlation</th>
+              <th style="width:200px">Strength</th>
+              <th>Interpretation</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${d.results.map(r => {
+              const barW = Math.round((Math.abs(r.correlation) / max) * 100);
+              const barColor = r.correlation > 0 ? 'var(--green)' : 'var(--red)';
+              const textColor = r.correlation > 0 ? 'var(--green)' : 'var(--red)';
+              return `
+                <tr>
+                  <td class="mono">${r.ticker}</td>
+                  <td>${r.asset_name}</td>
+                  <td class="dim">${r.sector || '—'}</td>
+                  <td class="mono" style="color:${textColor}">${r.correlation >= 0 ? '+' : ''}${r.correlation.toFixed(4)}</td>
+                  <td>
+                    <div style="background:var(--border);border-radius:2px;height:4px;overflow:hidden">
+                      <div style="width:${barW}%;height:100%;background:${barColor};border-radius:2px"></div>
+                    </div>
+                  </td>
+                  <td class="dim">${r.interpretation}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:10px">
+        ${d.total_assets_analysed} assets analysed · ${d.insufficient_data_assets} excluded (insufficient data)
+      </div>
+    `;
+  } catch(e) {
+    el.innerHTML = '';
+    toast(e.message, 'error');
+  }
+}
+
+// ── INDICATORS TABLE ──
+async function loadIndicatorsTable() {
+  const el = document.getElementById('indicators-table-wrap');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div> Loading...</div>';
+  try {
+    const inds = await api('/api/v1/indicators');
+    allIndicators = inds;
+    if (!inds.length) {
+      el.innerHTML = '<div class="empty">No indicators yet. Click Add Indicator to get started.</div>';
+      return;
+    }
+    el.innerHTML = `
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Series ID</th><th>Name</th><th>Category</th>
+            <th>Frequency</th><th>Unit</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${inds.map(i => `
+            <tr>
+              <td class="mono">${i.fred_series_id}</td>
+              <td>${i.name}</td>
+              <td><span class="badge flat">${i.category}</span></td>
+              <td class="dim">${i.frequency || '—'}</td>
+              <td class="dim">${i.unit || '—'}</td>
+              <td style="display:flex;gap:6px">
+                <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px"
+                  onclick="ingestIndicator(${i.id},'${i.fred_series_id}')">↓ Ingest</button>
+                <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px"
+                  onclick="editIndicator(${i.id})">Edit</button>
+                <button class="btn btn-danger" style="padding:5px 10px;font-size:12px"
+                  onclick="deleteIndicator(${i.id})">Delete</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch(e) { toast('Failed to load indicators', 'error'); }
+}
+
+async function ingestIndicator(id, seriesId) {
+  toast(`Ingesting ${seriesId} from FRED...`, 'success');
+  try {
+    const r = await api(`/api/v1/snapshots/indicators/${id}/ingest`, { method: 'POST' });
+    toast(`${seriesId}: ${r.inserted} inserted, ${r.skipped} skipped`, 'success');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function deleteIndicator(id) {
+  if (!confirm('Delete this indicator and all its snapshots?')) return;
+  try {
+    await api(`/api/v1/indicators/${id}`, { method: 'DELETE' });
+    toast('Indicator deleted', 'success');
+    loadIndicatorsTable();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function editIndicator(id) {
+  const ind = allIndicators.find(i => i.id === id);
+  if (!ind) return;
+  document.getElementById('ind-edit-id').value = id;
+  document.getElementById('ind-fred-id').value = ind.fred_series_id;
+  document.getElementById('ind-fred-id').disabled = true;
+  document.getElementById('ind-name').value = ind.name;
+  document.getElementById('ind-category').value = ind.category;
+  document.getElementById('ind-unit').value = ind.unit || '';
+  document.getElementById('ind-frequency').value = ind.frequency || '';
+  document.getElementById('ind-description').value = ind.description || '';
+  document.getElementById('modal-indicator-title').textContent = 'Edit Indicator';
+  openModal('indicator');
+}
+
+async function saveIndicator() {
+  const editId = document.getElementById('ind-edit-id').value;
+  const body = {
+    fred_series_id: document.getElementById('ind-fred-id').value.trim(),
+    name: document.getElementById('ind-name').value.trim(),
+    category: document.getElementById('ind-category').value,
+    unit: document.getElementById('ind-unit').value.trim(),
+    frequency: document.getElementById('ind-frequency').value.trim(),
+    description: document.getElementById('ind-description').value.trim(),
+    source: 'FRED',
+  };
+  try {
+    if (editId) {
+      await api(`/api/v1/indicators/${editId}`, { method: 'PATCH', body: JSON.stringify(body) });
+      toast('Indicator updated', 'success');
+    } else {
+      await api('/api/v1/indicators', { method: 'POST', body: JSON.stringify(body) });
+      toast('Indicator created', 'success');
+    }
+    closeModalDirect();
+    loadIndicatorsTable();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ── ASSETS TABLE ──
+async function loadAssetsTable() {
+  const el = document.getElementById('assets-table-wrap');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div> Loading...</div>';
+  try {
+    const assets = await api('/api/v1/assets');
+    allAssets = assets;
+    if (!assets.length) {
+      el.innerHTML = '<div class="empty">No assets yet. Click Add Asset to get started.</div>';
+      return;
+    }
+    el.innerHTML = `
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Ticker</th><th>Name</th><th>Class</th>
+            <th>Sector</th><th>Country</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${assets.map(a => `
+            <tr>
+              <td class="mono">${a.ticker}</td>
+              <td>${a.name}</td>
+              <td><span class="badge flat">${a.asset_class}</span></td>
+              <td class="dim">${a.sector || '—'}</td>
+              <td class="dim">${a.country || '—'}</td>
+              <td style="display:flex;gap:6px">
+                <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px"
+                  onclick="ingestAsset(${a.id},'${a.ticker}')">↓ Ingest</button>
+                <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px"
+                  onclick="editAsset(${a.id})">Edit</button>
+                <button class="btn btn-danger" style="padding:5px 10px;font-size:12px"
+                  onclick="deleteAsset(${a.id})">Delete</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch(e) { toast('Failed to load assets', 'error'); }
+}
+
+async function ingestAsset(id, ticker) {
+  toast(`Ingesting ${ticker} from Yahoo Finance...`, 'success');
+  try {
+    const r = await api(`/api/v1/snapshots/assets/${id}/ingest`, { method: 'POST' });
+    toast(`${ticker}: ${r.inserted} inserted, ${r.skipped} skipped`, 'success');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function deleteAsset(id) {
+  if (!confirm('Delete this asset and all its price history?')) return;
+  try {
+    await api(`/api/v1/assets/${id}`, { method: 'DELETE' });
+    toast('Asset deleted', 'success');
+    loadAssetsTable();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function editAsset(id) {
+  const a = allAssets.find(x => x.id === id);
+  if (!a) return;
+  document.getElementById('asset-edit-id').value = id;
+  document.getElementById('asset-ticker').value = a.ticker;
+  document.getElementById('asset-ticker').disabled = true;
+  document.getElementById('asset-name').value = a.name;
+  document.getElementById('asset-class').value = a.asset_class;
+  document.getElementById('asset-sector').value = a.sector || '';
+  document.getElementById('asset-country').value = a.country || 'US';
+  document.getElementById('asset-description').value = a.description || '';
+  document.getElementById('modal-asset-title').textContent = 'Edit Asset';
+  openModal('asset');
+}
+
+async function saveAsset() {
+  const editId = document.getElementById('asset-edit-id').value;
+  const body = {
+    ticker: document.getElementById('asset-ticker').value.trim().toUpperCase(),
+    name: document.getElementById('asset-name').value.trim(),
+    asset_class: document.getElementById('asset-class').value,
+    sector: document.getElementById('asset-sector').value.trim(),
+    country: document.getElementById('asset-country').value.trim(),
+    description: document.getElementById('asset-description').value.trim(),
+  };
+  try {
+    if (editId) {
+      await api(`/api/v1/assets/${editId}`, { method: 'PATCH', body: JSON.stringify(body) });
+      toast('Asset updated', 'success');
+    } else {
+      await api('/api/v1/assets', { method: 'POST', body: JSON.stringify(body) });
+      toast('Asset created', 'success');
+    }
+    closeModalDirect();
+    loadAssetsTable();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ── MODALS ──
+function openModal(type) {
+  const overlay = document.getElementById('modal-overlay');
+  document.getElementById('modal-indicator').style.display = type === 'indicator' ? 'block' : 'none';
+  document.getElementById('modal-asset').style.display = type === 'asset' ? 'block' : 'none';
+
+  if (type === 'indicator') {
+    // Reset if not editing
+    if (!document.getElementById('ind-edit-id').value) {
+      document.getElementById('modal-indicator-title').textContent = 'Add Indicator';
+      document.getElementById('ind-fred-id').disabled = false;
+      ['ind-fred-id','ind-name','ind-unit','ind-frequency','ind-description'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('ind-category').value = 'inflation';
+    }
+  } else {
+    if (!document.getElementById('asset-edit-id').value) {
+      document.getElementById('modal-asset-title').textContent = 'Add Asset';
+      document.getElementById('asset-ticker').disabled = false;
+      ['asset-ticker','asset-name','asset-sector','asset-description'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('asset-class').value = 'etf';
+      document.getElementById('asset-country').value = 'US';
+    }
+  }
+  overlay.classList.add('open');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModalDirect();
+}
+
+function closeModalDirect() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.getElementById('ind-edit-id').value = '';
+  document.getElementById('asset-edit-id').value = '';
+  document.getElementById('ind-fred-id').disabled = false;
+  document.getElementById('asset-ticker').disabled = false;
+}
+
+// ── CHART DEFAULTS ──
+function axisStyle() {
+  return {
+    grid: { color: 'rgba(39,39,42,0.8)' },
+    ticks: { color: '#52525b', font: { family: 'DM Mono', size: 10 } },
+    border: { color: 'var(--border)' },
+  };
+}
+
+function chartOptions({ dualAxis = false } = {}) {
+  const base = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: {
+        labels: { color: '#a1a1aa', font: { family: 'DM Sans', size: 12 }, boxWidth: 12 }
+      },
+      tooltip: {
+        backgroundColor: '#18181b',
+        borderColor: '#27272a',
+        borderWidth: 1,
+        titleColor: '#fafafa',
+        bodyColor: '#a1a1aa',
+        titleFont: { family: 'DM Mono', size: 11 },
+        bodyFont: { family: 'DM Mono', size: 11 },
+      }
+    },
+    scales: {
+      x: axisStyle(),
+      y: axisStyle(),
+    }
+  };
+
+  if (dualAxis) {
+    base.scales = {
+      x: axisStyle(),
+      y1: { ...axisStyle(), position: 'left' },
+      y2: { ...axisStyle(), position: 'right', grid: { drawOnChartArea: false } },
+    };
+  }
+  return base;
+}
+
+// ── INIT ──
+Chart.defaults.color = '#a1a1aa';
+Chart.defaults.borderColor = '#27272a';
+loadDashboard();
+</script>
+</body>
+</html>

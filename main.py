@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.database import Base, engine
@@ -31,9 +32,6 @@ app.include_router(assets.router)
 app.include_router(snapshots.router)
 app.include_router(analytics.router)
 
-# Mount static files for frontend dashboard (added in Stage 7)
-# app.mount("/", StaticFiles(directory="static", html=True), name="static")
-
 
 @app.get(
     "/health",
@@ -47,3 +45,7 @@ async def health_check():
         "version": settings.app_version,
         "title": settings.app_title,
     }
+
+
+# Serve frontend — must be last so API routes take priority
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
