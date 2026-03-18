@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import Base, engine
 from app.models import MacroIndicator, IndicatorSnapshot, MarketAsset, AssetSnapshot  # noqa: F401
-from app.routers import indicators, assets, snapshots
+from app.routers import indicators, assets, snapshots, analytics
 
 app = FastAPI(
     title=settings.app_title,
@@ -29,6 +29,7 @@ app.add_middleware(
 app.include_router(indicators.router)
 app.include_router(assets.router)
 app.include_router(snapshots.router)
+app.include_router(analytics.router)
 
 # Mount static files for frontend dashboard (added in Stage 7)
 # app.mount("/", StaticFiles(directory="static", html=True), name="static")

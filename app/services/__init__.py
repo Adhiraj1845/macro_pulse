@@ -1,3 +1,3 @@
-from app.services import ingestion
+from app.services import ingestion, analytics
 
-__all__ = ["ingestion"]
+__all__ = ["ingestion", "analytics"]
