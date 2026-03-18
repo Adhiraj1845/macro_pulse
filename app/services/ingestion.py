@@ -101,12 +101,29 @@ def ingest_asset_from_yfinance(asset: MarketAsset, db: Session) -> dict:
 
     Returns a dict with inserted/skipped counts.
     """
+    import time
     import yfinance as yf
 
     ticker = yf.Ticker(asset.ticker)
 
-    # Pull max available history (adjusted closes)
-    hist: pd.DataFrame = ticker.history(period="max", auto_adjust=True)
+    # Pull max available history with retry on rate-limit (429)
+    # Waits: 5s, 10s, 20s, 40s — Yahoo Finance needs longer back-off than typical APIs
+    hist: pd.DataFrame = pd.DataFrame()
+    last_exc: Exception = Exception("unknown error")
+    for attempt in range(4):
+        try:
+            hist = ticker.history(period="max", auto_adjust=True)
+            if not hist.empty:
+                break
+            # yfinance returns empty silently when rate-limited; retry with back-off
+            time.sleep(5 * (2 ** attempt))
+        except Exception as e:
+            last_exc = e
+            err = str(e).lower()
+            if "429" in err or "rate" in err or "too many" in err:
+                time.sleep(5 * (2 ** attempt))  # 5s, 10s, 20s, 40s
+            else:
+                raise
 
     if hist.empty:
         raise ValueError(

@@ -198,15 +198,13 @@ RECESSION_SIGNALS = [
 
 def _score_yield_curve(value: float) -> float:
     """
-    Yield curve (T10Y2Y): negative = inversion = recession signal.
-    Score 1.0 when deeply inverted (< -1.0), 0.0 when steeply positive (> 1.5).
+    Yield curve (T10Y2Y): only scores when actually inverted (negative).
+    0.0 at flat/positive, scales linearly to 1.0 at -2.0 inversion.
     """
-    if value <= -1.0:
+    if value <= -2.0:
         return 1.0
-    elif value <= 0.0:
-        return 0.5 + (abs(value) / 1.0) * 0.5
-    elif value <= 1.5:
-        return max(0.0, 0.5 - (value / 1.5) * 0.5)
+    elif value < 0.0:
+        return abs(value) / 2.0
     return 0.0
 
 
