@@ -13,8 +13,8 @@ build/
 .eggs/
 
 # Database
-*.db
-*.sqlite3
+# *.db
+# *.sqlite3
 
 # Virtual environment
 venv/
