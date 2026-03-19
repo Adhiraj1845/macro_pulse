@@ -24,8 +24,10 @@ import asyncio
 import sys
 import os
 
-# Ensure project root is in path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Ensure project root is in path AND set CWD so relative DB path resolves correctly
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, PROJECT_ROOT)
+os.chdir(PROJECT_ROOT)
 
 from mcp.server.stdio import stdio_server
 from app.mcp_server import server
