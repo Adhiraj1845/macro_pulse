@@ -1057,18 +1057,20 @@ async function loadRecession() {
           ${d.signals.map(s => {
             const pct = Math.round(s.signal_score * 100);
             const barColor = pct > 66 ? 'var(--red)' : pct > 33 ? 'var(--amber)' : 'var(--green)';
+            const valueLabel = s.current_value != null ? fmt(s.current_value, 3) : '—';
+            const signalLabel = pct === 0 ? 'No signal' : pct + '%';
             return `
               <div class="signal-item">
                 <div>
                   <div class="signal-name">${s.name}</div>
-                  <div class="signal-desc">${s.current_value != null ? s.fred_series_id + ': ' + fmt(s.current_value, 3) : 'No data ingested'}</div>
+                  <div class="signal-desc">${s.fred_series_id}</div>
                   <div class="signal-bar-wrap">
                     <div class="signal-bar" style="width:${pct}%;background:${barColor}"></div>
                   </div>
                 </div>
-                <div>
-                  <div class="signal-value" style="color:${barColor}">${pct}%</div>
-                  <div class="signal-contrib">+${fmt(s.contribution, 1)} pts</div>
+                <div style="text-align:right">
+                  <div class="signal-value" style="color:var(--text1)">${valueLabel}</div>
+                  <div class="signal-contrib" style="color:${barColor}">${signalLabel}</div>
                 </div>
               </div>
             `;
