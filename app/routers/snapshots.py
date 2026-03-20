@@ -11,7 +11,9 @@ Ingestion endpoints are POST because they trigger a side effect
 from datetime import date
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -25,6 +27,9 @@ from app.schemas import (
 from app.services.ingestion import ingest_asset_from_yfinance, ingest_indicator_from_fred
 
 router = APIRouter(prefix="/api/v1/snapshots", tags=["Snapshots & Ingestion"])
+
+# Ingest endpoints get a tighter limit — each call hits an external API (FRED / Yahoo Finance)
+limiter = Limiter(key_func=get_remote_address)
 
 
 # ---------------------------------------------------------------------------
@@ -47,7 +52,8 @@ router = APIRouter(prefix="/api/v1/snapshots", tags=["Snapshots & Ingestion"])
         422: {"description": "FRED API key not configured or invalid series ID"},
     },
 )
-def ingest_indicator(indicator_id: int, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def ingest_indicator(request: Request, indicator_id: int, db: Session = Depends(get_db)):
     indicator = db.query(MacroIndicator).filter(MacroIndicator.id == indicator_id).first()
     if not indicator:
         raise HTTPException(
@@ -124,7 +130,8 @@ def get_indicator_snapshots(
         422: {"description": "Invalid ticker or no data returned"},
     },
 )
-def ingest_asset(asset_id: int, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def ingest_asset(request: Request, asset_id: int, db: Session = Depends(get_db)):
     asset = db.query(MarketAsset).filter(MarketAsset.id == asset_id).first()
     if not asset:
         raise HTTPException(
