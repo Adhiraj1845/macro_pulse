@@ -887,7 +887,9 @@ hr { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
 <div class="toast" id="toast"></div>
 
 <script>
-const API = '';
+const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:8000'
+  : 'https://macropulse-production.up.railway.app';
 let corrChart = null, scatterChart = null;
 let allIndicators = [], allAssets = [];
 
