@@ -123,10 +123,22 @@ uvicorn main:app --reload
 
 | URL | What you get |
 |-----|-------------|
-| http://127.0.0.1:8000 | Interactive web dashboard |
 | http://127.0.0.1:8000/api/v1 | REST API base |
 | http://127.0.0.1:8000/docs | Swagger UI |
 | http://127.0.0.1:8000/redoc | ReDoc |
+
+### 7. Open the dashboard
+
+The web dashboard is served separately from the API. Open a second terminal:
+
+```bash
+cd static
+python -m http.server 3000
+```
+
+Then visit **http://localhost:3000** in your browser.
+
+> The dashboard auto-detects its environment: when opened from `localhost` it targets `http://localhost:8000`; when opened from any other host (e.g., GitHub Pages or Netlify) it targets `https://macropulse-production.up.railway.app`.
 
 ---
 
@@ -171,7 +183,7 @@ macro_pulse/
 │   └── test_api.py             # 36 integration tests
 │
 └── static/
-    └── index.html              # Interactive web dashboard
+    └── index.html              # Standalone web dashboard (served separately from the API)
 ```
 
 ---

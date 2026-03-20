@@ -1,6 +1,5 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -65,6 +64,3 @@ async def health_check():
         "title": settings.app_title,
     }
 
-
-# Serve frontend — must be last so API routes take priority
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
