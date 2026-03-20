@@ -26,6 +26,36 @@ Interactive documentation is also available when the server is running:
 
 ---
 
+## Requirements
+
+- **Python 3.10 or higher** (developed and tested on Python 3.12)
+- A free **FRED API key** — register at https://fred.stlouisfed.org/docs/api/api_key.html
+- All Python packages are listed in `requirements.txt` — install with one command (see Quick Start)
+
+### Full dependency list
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `fastapi` | 0.124.0 | Web framework |
+| `uvicorn[standard]` | 0.32.1 | ASGI server |
+| `sqlalchemy` | 2.0.30 | ORM and database abstraction |
+| `pydantic` | 2.11.9 | Data validation and serialisation |
+| `pydantic-settings` | 2.5.2 | Environment variable management |
+| `python-dotenv` | 1.0.1 | `.env` file loading |
+| `httpx` | 0.28.1 | HTTP client (used by FastAPI test client) |
+| `fredapi` | 0.5.2 | FRED API client |
+| `yfinance` | 0.2.40 | Yahoo Finance price data |
+| `pandas` | 2.2.2 | Time-series alignment and resampling |
+| `numpy` | 1.26.4 | Linear regression for trend detection |
+| `scipy` | 1.13.0 | Pearson correlation coefficient |
+| `slowapi` | 0.1.9 | IP-based rate limiting |
+| `mcp` | 1.26.0 | Model Context Protocol server (Claude Desktop) |
+| `pytest` | 8.2.0 | Integration testing |
+| `pytest-asyncio` | 0.23.6 | Async test support |
+| `aiosqlite` | 0.20.0 | Async SQLite driver for tests |
+
+---
+
 ## Quick Start
 
 ### 1. Clone the repository
@@ -47,24 +77,33 @@ venv\Scripts\activate
 source venv/bin/activate
 ```
 
-### 3. Install dependencies
+### 3. Install all dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
+This installs every package at the exact pinned version. No other setup is needed.
+
 ### 4. Configure environment variables
 
 ```bash
+# Windows
+copy .env.example .env
+
+# macOS / Linux
 cp .env.example .env
 ```
 
-Edit `.env` and add your FRED API key (free at https://fred.stlouisfed.org/docs/api/api_key.html):
+Edit `.env` and set your FRED API key:
 
 ```
 FRED_API_KEY=your_fred_api_key_here
 DATABASE_URL=sqlite:///./macro_api.db
 ```
+
+> The FRED API key is free — register at https://fred.stlouisfed.org/docs/api/api_key.html.
+> Yahoo Finance requires no authentication.
 
 ### 5. Seed the database
 
@@ -72,7 +111,9 @@ DATABASE_URL=sqlite:///./macro_api.db
 python scripts/seed_data.py
 ```
 
-This creates 62 default assets (ETFs, equities, commodities, bonds, international) and 7 macro indicators, then downloads their full historical data from FRED and Yahoo Finance in a single batch request.
+When prompted, enter `y` to also ingest historical data. This creates 62 market assets and 7 macro indicators, then batch-downloads all price and indicator history from FRED and Yahoo Finance.
+
+> **Note:** Yahoo Finance enforces rate limits. If ingestion fails partway through, wait 5 minutes and run the script again — it automatically skips assets and indicators that already have data.
 
 ### 6. Run the API
 
@@ -80,7 +121,12 @@ This creates 62 default assets (ETFs, equities, commodities, bonds, internationa
 uvicorn main:app --reload
 ```
 
-The dashboard is at **http://127.0.0.1:8000** and the API at **http://127.0.0.1:8000/api/v1**.
+| URL | What you get |
+|-----|-------------|
+| http://127.0.0.1:8000 | Interactive web dashboard |
+| http://127.0.0.1:8000/api/v1 | REST API base |
+| http://127.0.0.1:8000/docs | Swagger UI |
+| http://127.0.0.1:8000/redoc | ReDoc |
 
 ---
 
@@ -89,13 +135,13 @@ The dashboard is at **http://127.0.0.1:8000** and the API at **http://127.0.0.1:
 ```
 macro_pulse/
 ├── main.py                     # FastAPI application entry point
-├── requirements.txt            # Python dependencies
-├── .env.example                # Environment variable template
+├── requirements.txt            # All pinned Python dependencies
+├── .env.example                # Environment variable template — copy to .env
 ├── Procfile                    # Heroku deployment config
 ├── runtime.txt                 # Python runtime version
 │
 ├── app/
-│   ├── config.py               # Pydantic settings (env vars)
+│   ├── config.py               # Pydantic settings (reads .env)
 │   ├── database.py             # SQLAlchemy engine, session, Base
 │   ├── mcp_server.py           # Model Context Protocol server
 │   │
@@ -122,13 +168,24 @@ macro_pulse/
 │   └── run_mcp.py              # MCP server entry point for Claude Desktop
 │
 ├── tests/
-│   └── test_api.py             # Pytest integration tests (36 tests)
+│   └── test_api.py             # 36 integration tests
 │
-├── static/
-│   └── index.html              # Interactive web dashboard
-│
-└── api_docs.pdf                # Full API documentation (PDF)
+└── static/
+    └── index.html              # Interactive web dashboard
 ```
+
+---
+
+## Security — Rate Limiting
+
+All API endpoints are protected by **IP-based rate limiting** via `slowapi`:
+
+| Endpoint group | Limit |
+|---------------|-------|
+| All endpoints (default) | 60 requests / minute per IP |
+| `POST .../ingest` endpoints | 10 requests / minute per IP |
+
+Exceeding the limit returns `HTTP 429 Too Many Requests`. The window resets on a rolling 1-minute basis. No tokens or headers are required from the client.
 
 ---
 
@@ -187,7 +244,7 @@ macro_pulse/
 pytest tests/ -v
 ```
 
-36 integration tests covering all CRUD operations and analytics endpoints. Tests use an in-memory SQLite database and never touch production data.
+36 integration tests covering all CRUD operations and analytics endpoints. Tests use an in-memory SQLite database — they never touch your seeded data.
 
 ---
 
@@ -206,7 +263,7 @@ All database interaction goes through SQLAlchemy. Switching to PostgreSQL requir
 Business logic (ingestion, analytics) lives in `app/services/`, completely separate from HTTP concerns in `app/routers/`. Analytics functions are independently testable and the data source can be swapped without touching any router code.
 
 ### Idempotent Ingestion
-The ingestion service checks existing dates before inserting, making every ingest call safe to repeat. For the seed script, `yf.download()` is used to batch all new tickers into a single HTTP request, avoiding Yahoo Finance rate limits.
+The ingestion service checks existing dates before inserting, making every ingest call safe to repeat. The seed script uses `yf.download()` to batch all new tickers into a single HTTP request, avoiding Yahoo Finance rate limits.
 
 ---
 
@@ -251,25 +308,6 @@ Fully quit and relaunch Claude Desktop after editing.
 - *"How correlated is the yield curve with SPY over the past 2 years?"*
 - *"Which sectors are most exposed to changes in CPI?"*
 - *"Is unemployment trending up or down over the last 24 months?"*
-
----
-
-## Dependencies
-
-| Package | Purpose |
-|---------|---------|
-| `fastapi` | Web framework |
-| `uvicorn` | ASGI server |
-| `sqlalchemy` | ORM and database abstraction |
-| `pydantic` | Data validation and serialisation |
-| `pydantic-settings` | Environment variable management |
-| `fredapi` | FRED API client |
-| `yfinance` | Yahoo Finance price data |
-| `pandas` | Time-series alignment and resampling |
-| `numpy` | Linear regression for trend detection |
-| `scipy` | Pearson correlation coefficient |
-| `mcp` | Model Context Protocol server |
-| `pytest` | Integration testing |
 
 ---
 
